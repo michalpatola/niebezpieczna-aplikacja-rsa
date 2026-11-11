@@ -1,0 +1,1 @@
+# plik pomocniczy do testow
