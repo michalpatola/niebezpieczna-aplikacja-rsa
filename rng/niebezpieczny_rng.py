@@ -7,7 +7,7 @@ istotą słabości tego generatora, jest wybór słabego ziarna x_0.
 '''
 
 import time
-from rsa_male_liczby import czy_pierwsza
+from rsa.rsa_male_liczby import czy_pierwsza
 
 #Stałe LCG
 A = 1664525
