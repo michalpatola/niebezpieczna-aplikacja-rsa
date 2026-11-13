@@ -37,6 +37,19 @@ def zwroc_tablice_ilorazow(a: int, b: int) -> list:
     return Q
 
 
+# zwraca x takie, że x * a + y * m = 1 (mod m), czyli oblicza a^(-1)
+def rozszerzony_algorytm_euklidesa(a: int, m: int) -> int:
+    Q = zwroc_tablice_ilorazow(a, m)
+    x = (-1) * Q[len(Q) - 1]
+    y = 1
+
+    # zauważyłem, jak współczynniki przy coraz wcześniejszych parach reszt zależą od poprzedniej pary współczynników, rozpisując sobie na przykładzie
+    for i in range(len(Q) - 2, -1, -1):
+        x, y = (y - x * Q[i]), x
+
+    return x % m # modulo jest po to, żeby x był ze zbioru {0, 1, 2, ..., m - 1}
+
+
 # sprawdza, czy podana liczba jest liczbą pierwszą
 def czy_pierwsza(liczba: int) -> bool:
     if liczba < 2:
@@ -49,19 +62,6 @@ def czy_pierwsza(liczba: int) -> bool:
         i += 1
 
     return True
-
-
-# zwraca x takie, że x * a + y * m = 1 (mod m), czyli oblicza a^(-1)
-def rozszerzony_algorytm_euklidesa(a: int, m: int) -> int:
-    Q = zwroc_tablice_ilorazow(a, m)
-    x = (-1) * Q[len(Q) - 1]
-    y = 1
-
-    # zauważyłem, jak współczynniki przy coraz wcześniejszych parach reszt zależą od poprzedniej pary współczynników, rozpisując sobie na przykładzie
-    for i in range(len(Q) - 2, -1, -1):
-        x, y = (y - x * Q[i]), x
-
-    return x % m # modulo jest po to, żeby x był ze zbioru {0, 1, 2, ..., m - 1}
 
 
 # znajduje klucz prywatny d, czyli odwrotność e w modulo (p-1)*(q-1)
@@ -104,9 +104,9 @@ def odszyfruj_rsa(szyfrogram: int, klucz_prywatny: int, modul_systemu: int) -> i
 # wyświetla menu wyboru dla przykładu poniżej
 def wyswietl_menu():
     print()
-    print("1 - Zaszyfruj wiadomość")
-    print("2 - Odszyfruj wiadomość")
-    print("3 - Wylicz klucz prywatny")
+    print("1 - Wylicz klucz prywatny")
+    print("2 - Zaszyfruj wiadomość")
+    print("3 - Odszyfruj wiadomość")
     print("4 - Wyjdź")
 
 
@@ -119,20 +119,22 @@ if __name__ == "__main__":
         wyswietl_menu()
         wybor = int(input("Twój wybór: "))
         if wybor == 1:
-            N = int(input("Podaj moduł systemu (N = p * q, gdzie p i q to liczby pierwsze): "))
+            p = int(input("Podaj p (liczbę pierwszą): "))
+            q = int(input("Podaj q (liczbę pierwszą, inną niż p): "))
             e = int(input("Podaj klucz publiczny (wykładnik e, taki że e > 1 ORAZ e < (fi = (p - 1) * (q - 1)) ORAZ NWD(e, fi) = 1): "))
+            print("Klucz prywatny:", znajdz_klucz_prywatny(p, q, e))
+            print("N =", p * q)
+            print("fi =", (p - 1) * (q - 1))
+        elif wybor == 2:
+            N = int(input("Podaj moduł systemu (N = p * q): "))
+            e = int(input("Podaj klucz publiczny: "))
             M = int(input("Podaj wiadomość do zaszyfrowania (tekst jawny M, taki że M >= 0 ORAZ M < N ORAZ dla małych liczb NWD(M, N) = 1): "))
             print("Zaszyfrowana wiadomość:", zaszyfruj_rsa(M, e, N))
-        elif wybor == 2:
+        elif wybor == 3:
             N = int(input("Podaj moduł systemu: "))
-            d = int(input("Podaj klucz prywatny (wykładnik d): "))
+            d = int(input("Podaj klucz prywatny (wykładnik d, taki że e * d = 1 (mod fi)): "))
             C = int(input("Podaj wiadomość do odszyfrowania: "))
             print("Odszyfrowana wiadomość:", odszyfruj_rsa(C, d, N))
-        elif wybor == 3:
-            p = int(input("Podaj p: "))
-            q = int(input("Podaj q: "))
-            e = int(input("Podaj klucz publiczny (wykładnik e): "))
-            print("Klucz prywatny:", znajdz_klucz_prywatny(p, q, e))
         elif wybor == 4:
             break
         else:
