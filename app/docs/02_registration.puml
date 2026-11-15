@@ -1,0 +1,19 @@
+@startuml
+title Registration
+autonumber
+
+participant "Alice\n(client)" as A
+participant "Server\n(HTTP + WebSocket feed)" as S
+database "DB" as DB
+
+A -> A : generate RSA key pair,\nsave private key locally
+A -> S : POST /register {name: "alice", public_key}
+S -> DB : INSERT INTO keys
+alt name is free
+  DB --> S : ok
+  S --> A : 200
+else name taken (PK violation)
+  DB --> S : constraint error
+  S --> A : 409
+end
+@enduml

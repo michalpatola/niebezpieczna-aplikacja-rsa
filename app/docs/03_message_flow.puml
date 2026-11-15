@@ -1,0 +1,43 @@
+@startuml
+title Message flow
+autonumber
+
+participant "Mallory\n(malicious client)" as M
+participant "Alice\n(client)" as A
+participant "Server\n(HTTP + WebSocket feed)" as S
+database "DB" as DB
+participant "Bob\n(client)" as B
+
+== Sending a message ==
+A -> S : GET /keys/bob
+S -> DB : SELECT public_key
+DB --> S : bob's key
+S --> A : bob's public key
+
+A -> A : payload = {"from":"alice","text":"..."}\nC = encrypt(bob key, payload)\ntimestamp = now (ms)\nsig = sign(H(pad(from, 32) || timestamp || C))
+A -> S : POST /messages {from, to: "bob", timestamp, ciphertext: C, signature: sig}
+S -> S : check size and JSON shape
+S -> DB : INSERT INTO messages (sender, recipient, timestamp, frame)
+S --> A : 200
+
+== Broadcast ==
+note over M, B
+  All clients keep a WebSocket open and receive every stored frame.
+  Alice, Bob and Mallory all see the exact same feed.
+end note
+S ->> A : push frame
+S ->> B : push frame
+S ->> M : push frame
+
+A -> A : to != alice, drop\n(echo of own frame)
+M -> M : to != mallory, drop\n(still keeps a copy of the ciphertext)
+
+B -> B : to == bob
+B -> S : GET /keys/alice
+S --> B : alice's public key
+B -> B : verify signature
+B -> B : decrypt ciphertext
+B -> B : parse payload strictly
+B -> B : payload.from == frame.from ?
+B -> B : display, ordered by timestamp
+@enduml
