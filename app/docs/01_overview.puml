@@ -6,10 +6,10 @@ skinparam packageStyle rectangle
 package "Clients" as Clients {
   actor "Alice\n(client)" as Alice
   actor "Bob\n(client)" as Bob
-  actor "Mallory\n(attacker, ordinary client)" as Mallory
+  actor "Mallory\n(malicious client)" as Mallory
 }
 
-component "Relay Server" as Server
+component "Server" as Server
 database "DB" as DB
 
 Clients -right-> Server : HTTP\nregister, get_key, send
@@ -25,7 +25,6 @@ note bottom of Clients
   - apply receive logic: check "to", verify
     signature, decrypt, parse payload
   - on parse failure, send the error bounce
-    (the deliberate oracle)
 
   Mallory is a registered user like anyone else:
   same HTTP access, same broadcast feed.
@@ -34,20 +33,24 @@ end note
 
 note bottom of Server
   **Server responsibilities**
+  HTTP (request / response):
   - key directory: first-come, no overwrite
-  - accept frames via POST /messages,
-    check size / JSON shape only
-  - store every frame verbatim
-  - broadcast every frame to all open sockets
-  - never parses ciphertext or signatures,
-    never decides who is right or wrong
+  - responds to GET /keys with public keys
+  - accepts frames via POST /messages,
+    checks size / JSON shape only
+  - stores every frame verbatim (for logging purposes)
+
+  WebSocket (live feed, simplex: server to client only):
+  - broadcasts every stored frame to all open sockets
+  - dumb relay: never parses ciphertext or signatures,
 end note
+
 
 note bottom of DB
   **Storage responsibilities**
-  - "keys": name -> public_key (PK, no overwrite)
+  - "keys": name -> public_key (no overwrite)
   - "messages": log of raw frames,
     extra columns for human-readable filtering only
-  - never queried by the server itself
+    never queried by the server itself
 end note
 @enduml
