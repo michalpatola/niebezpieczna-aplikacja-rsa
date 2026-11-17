@@ -1,0 +1,42 @@
+@startuml
+title Signing oracle attack: forging Alice's signature
+autonumber
+
+participant "Mallory\n(registered user)" as M
+participant "Server" as S
+participant "Alice\n(victim oracle)" as A
+participant "Bob\n(target)" as B
+
+== Preparation ==
+M -> S : GET /keys/alice, GET /keys/bob
+S --> M : public keys
+M -> M : choose forged message\nC = encrypt(bob key, {"from":"alice","text":"..."})\ntimestamp = now (ms)\nh = H(pad("alice", 32) || timestamp || C)
+
+== Trigger: use Alice's client as a decryption oracle ==
+M -> S : POST /messages\n{from: "mallory", to: "alice", timestamp, ciphertext: h, signature: sig_M}
+S --> M : 200
+S ->> A : push frame
+S ->> B : push frame
+B -> B : to != bob, drop
+
+A -> A : to == alice
+A -> A : verify sig_M against Mallory's key: valid
+A -> A : x = decrypt(alice private key, h)\n(it's RSA, so Alice decrypting \n gives the same result as Alice signing)
+A -> A : parse x as JSON: fails \n(because it's a hash, not a JSON payload)
+
+== Bounce: Alice's client leaks the result ==
+A -> S : POST /messages\n{from: "alice", to: "mallory",\nciphertext: encrypt(mallory key, {"from":"alice","text":"error: malformed message, content=hex(x)"}),\nsignature}
+S ->> M : push frame
+M -> M : decrypt, read hex(x)\ns = x\nnow s is a valid Alice's signature on C
+
+== Forgery ==
+M -> S : POST /messages\n{from: "alice", to: "bob", timestamp, ciphertext: C, signature: s}
+S ->> B : push frame
+B -> B : verify(alice key, s over H(pad(from, 32) || timestamp || C)): valid
+B -> B : decrypt C, parse OK, inner from == "alice"
+B -> B : display Mallory's message as from Alice
+
+note over M, B
+  With no time window there is no deadline, and s stays valid forever.
+end note
+@enduml

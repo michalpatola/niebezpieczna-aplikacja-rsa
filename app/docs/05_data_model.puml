@@ -1,0 +1,64 @@
+@startuml
+title Data model
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Frame <<envelope>> {
+  from : string
+  to : string
+  timestamp : int64 (sender clock, ms)
+  ciphertext : bytes (base64)
+  signature : bytes (base64)
+}
+
+class Payload <<encrypted>> {
+  from : string
+  text : string
+}
+
+class CryptoModule <<module>> {
+  keygen() : KeyPair
+  encrypt(key, msg) : bytes
+  decrypt(key, msg) : bytes
+  hash(data) : bytes
+  sign(privateKey, hash) : bytes
+  verify(publicKey, hash, sig) : bool
+}
+
+class "keys" as Keys <<table>> {
+  name : TEXT <<PK>>
+  public_key : TEXT
+}
+
+class "messages" as Messages <<table>> {
+  sender : TEXT
+  recipient : TEXT
+  timestamp : INTEGER
+  frame : TEXT
+}
+
+Frame ..> Payload : ciphertext =\nencrypt(recipient key, JSON(payload))
+CryptoModule ..> Frame : builds, signs,\nverifies, decrypts
+Messages ..> Frame : stores verbatim in "frame";\nother columns are unverified copies\nof from, to, timestamp (log readability only)
+Keys ..> CryptoModule : public keys fetched via\nGET /keys/{name}, used for\nencrypt and verify
+
+note bottom of Frame
+  from is right-padded with padding to a fixed width (32 bytes)
+  before hashing, so every field has a fixed position:
+
+  signature = sign(H( pad(from, 32) || timestamp || ciphertext ))
+
+  "to" is deliberately unsigned
+end note
+
+note bottom of Keys
+  Registration enforces a username charset/length
+  that makes the padding above unambiguous:
+  1-32 bytes, no padding byte, 8-bit character encoding.
+end note
+
+note bottom of Messages
+  Server never queries this table.
+  Hidden rowid gives arrival order.
+end note
+@enduml

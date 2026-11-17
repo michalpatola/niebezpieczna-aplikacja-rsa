@@ -1,0 +1,52 @@
+@startuml
+title Client receive logic
+start
+
+:Frame arrives on the WebSocket feed;
+
+if (to == me?) then (no)
+  :Ignore frame\n(also drops echo of own frames);
+  stop
+else (yes)
+endif
+
+floating note right
+  Optional extension (time window):
+  drop frame if |local_now - timestamp| > N
+end note
+
+:Verify signature against the\nregistered public key of "from";
+
+if (signature valid?) then (no)
+  :Drop frame;
+  stop
+else (yes)
+endif
+
+:Decrypt ciphertext\nwith own private key;
+
+if (payload parses as strict JSON\n{from, text}?) then (no)
+  if (frame is an error bounce?) then (yes)
+    :Do not reply\n(prevents error ping-pong);
+  else (no)
+    :Send error bounce to "from"\nvia POST /messages\ntext = "error: malformed message,\ncontent=<hex of decrypted bytes>";
+    note right
+      Deliberate signing oracle surface:
+      raw decrypted bytes leave the client.
+      Decryption never fails,
+      so this is the only failure path.
+    end note
+  endif
+  stop
+else (yes)
+endif
+
+if (payload.from == envelope.from?) then (no)
+  :Reject frame\n(signature stripping / re-signing protection);
+  stop
+else (yes)
+endif
+
+:Display message, ordered by timestamp;
+stop
+@enduml
