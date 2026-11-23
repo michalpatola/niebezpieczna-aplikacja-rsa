@@ -4,7 +4,7 @@ Liczby ujemne kodowane są zwyczajnie przez dodanie znaku "-" na początku liczb
 
 
 # usuwa zera na początku liczby binarnej (DODATNIEJ lub UJEMNEJ)
-def usun_zera_wiodace(liczba: str) -> str:
+def _usun_zera_wiodace(liczba: str) -> str:
     czy_minus = False
     if liczba != "" and liczba[0] == "-":
         liczba = liczba[1:]
@@ -32,12 +32,12 @@ def usun_zera_wiodace(liczba: str) -> str:
 
 
 # dodaje dwie DODATNIE liczby binarne
-def dodaj_dodatnie(a: str, b: str) -> str:
+def _dodaj_dodatnie(a: str, b: str) -> str:
     if (a != "" and a[0] == "-") or (b != "" and b[0] == "-"):
         raise Exception("Obie liczby muszą być dodatnie!")
 
-    a = usun_zera_wiodace(a)
-    b = usun_zera_wiodace(b)
+    a = _usun_zera_wiodace(a)
+    b = _usun_zera_wiodace(b)
 
     dlugosc_a = len(a)
     dlugosc_b = len(b)
@@ -67,11 +67,11 @@ def dodaj_dodatnie(a: str, b: str) -> str:
     # dodajemy pozostałe przeniesienie
     wynik = str(przeniesienie) + wynik
 
-    return usun_zera_wiodace(wynik)
+    return _usun_zera_wiodace(wynik)
 
 
 # dodaje zera na końcu liczby binarnej (dotyczy tylko liczb DODATNICH)
-def dodaj_zera_na_koncu(liczba: str, ile: int) -> str:
+def _dodaj_zera_na_koncu(liczba: str, ile: int) -> str:
     if liczba != "" and liczba[0] == "-":
         raise Exception("Liczba musi być dodatnia!")
 
@@ -83,8 +83,8 @@ def dodaj_zera_na_koncu(liczba: str, ile: int) -> str:
 
 # mnoży dwie DOWOLNE (zarówno dodatnie, jak i ujemne) liczby binarne
 def pomnoz(a: str, b: str) -> str:
-    a = usun_zera_wiodace(a)
-    b = usun_zera_wiodace(b)
+    a = _usun_zera_wiodace(a)
+    b = _usun_zera_wiodace(b)
 
     czy_minus = False
 
@@ -108,7 +108,7 @@ def pomnoz(a: str, b: str) -> str:
 
     for i in range(dlugosc_a - 1, -1, -1):
         if a[i] == "1":
-            wynik = dodaj_dodatnie(wynik, dodaj_zera_na_koncu(b, przesuniecie))
+            wynik = _dodaj_dodatnie(wynik, _dodaj_zera_na_koncu(b, przesuniecie))
 
         przesuniecie += 1
 
@@ -121,35 +121,39 @@ def pomnoz(a: str, b: str) -> str:
     return wynik
 
 
-# zwraca true, jeśli a >= b (gdzie a, b - liczby DODATNIE)
-def czy_niemniejsza(a: str, b: str) -> bool:
+# działa tylko dla binarnych liczb DODATNICH: a, b
+# zwraca:
+# 1 - jeśli a > b
+# 0 - jeśli a == b
+# -1 - jeśli a < b
+def porownaj(a: str, b: str) -> int:
     if (a != "" and a[0] == "-") or (b != "" and b[0] == "-"):
         raise Exception("Obie liczby muszą być dodatnie!")
 
-    a = usun_zera_wiodace(a)
-    b = usun_zera_wiodace(b)
+    a = _usun_zera_wiodace(a)
+    b = _usun_zera_wiodace(b)
     dlugosc_a = len(a)
     dlugosc_b = len(b)
 
     if dlugosc_a > dlugosc_b:
-        return True
+        return 1
 
     if dlugosc_a < dlugosc_b:
-        return False
+        return -1
     
     for i in range(dlugosc_a):
         if a[i] == b[i]:
             continue
         if a[i] > b[i]:
-            return True
+            return 1
         else:
-            return False
+            return -1
 
-    return True
+    return 0
 
 
 # zamienia liczbę binarną ze stringa na listę (dotyczy liczb DODATNICH)
-def zamien_na_liste(liczba: str) -> list:
+def _zamien_na_liste(liczba: str) -> list:
     if liczba != "" and liczba[0] == "-":
         raise Exception("Liczba musi być dodatnia!")
 
@@ -161,23 +165,23 @@ def zamien_na_liste(liczba: str) -> list:
 
 
 # oblicza a - b, gdzie a oraz b to DODATNIE liczby binarne
-def odejmij_dodatnie(a: str, b: str) -> str:
+def _odejmij_dodatnie(a: str, b: str) -> str:
     if (a != "" and a[0] == "-") or (b != "" and b[0] == "-"):
         raise Exception("Obie liczby muszą być dodatnie!")
 
-    a = usun_zera_wiodace(a)
-    b = usun_zera_wiodace(b)
+    a = _usun_zera_wiodace(a)
+    b = _usun_zera_wiodace(b)
 
     czy_minus = False
 
     # jeśli wynik odejmowania miałby wyjść ujemny, to zamieniamy liczby i dodajemy minus na końcu (bo a - b = - (b - a))
-    if not czy_niemniejsza(a, b):
+    if porownaj(a, b) == -1:
         czy_minus = True
         a, b = b, a
 
     # zamieniam na listę, żeby dało się modyfikować poszczególne cyfry liczby binarnej
-    a = zamien_na_liste(a)
-    b = zamien_na_liste(b)
+    a = _zamien_na_liste(a)
+    b = _zamien_na_liste(b)
 
     dlugosc_a = len(a)
     dlugosc_b = len(b)
@@ -214,7 +218,7 @@ def odejmij_dodatnie(a: str, b: str) -> str:
     for i in range(dlugosc_a - dlugosc_b - 1, -1, -1):
         wynik = a[i] + wynik
 
-    wynik = usun_zera_wiodace(wynik)
+    wynik = _usun_zera_wiodace(wynik)
 
     if czy_minus:
         return "-" + wynik
@@ -232,27 +236,27 @@ def zmien_znak_liczby(liczba: str) -> str:
 # dodaje dwie DOWOLNE (zarówno dodatnie, jak i ujemne) liczby binarne
 def dodaj(a: str, b: str) -> str:
     if a == "":
-        return usun_zera_wiodace(b)
+        return _usun_zera_wiodace(b)
     
     if b == "":
-        return usun_zera_wiodace(a)
+        return _usun_zera_wiodace(a)
     
     if a[0] != "-" and b[0] != "-":
-        return dodaj_dodatnie(a, b)
+        return _dodaj_dodatnie(a, b)
     
     if a[0] == "-" and b[0] == "-":
-        return "-" + dodaj_dodatnie(zmien_znak_liczby(a), zmien_znak_liczby(b))
+        return "-" + _dodaj_dodatnie(zmien_znak_liczby(a), zmien_znak_liczby(b))
 
     if a[0] != "-" and b[0] == "-":
-        return odejmij_dodatnie(a, zmien_znak_liczby(b))
+        return _odejmij_dodatnie(a, zmien_znak_liczby(b))
 
     if a[0] == "-" and b[0] != "-":
-        return odejmij_dodatnie(b, zmien_znak_liczby(a))
+        return _odejmij_dodatnie(b, zmien_znak_liczby(a))
 
 
 # oblicza wynik z dzielenia całkowitego liczba przez 2 dla DOWOLNEJ liczby binarnej
 def podziel_calkowicie_przez_2(liczba: str) -> str:
-    liczba = usun_zera_wiodace(liczba)
+    liczba = _usun_zera_wiodace(liczba)
 
     if liczba == "0" or liczba == "1":
         return "0"
@@ -275,11 +279,11 @@ def podziel_calkowicie_przez_2(liczba: str) -> str:
 # w szczególności podziel_calkowicie(a, b) nie musi się równać podziel_calkowicie(-a, -b)
 # ta funkcja istnieje głównie dla kolejnej funkcji, czyli modulo
 def podziel_calkowicie(a: str, b: str) -> str:
-    a = usun_zera_wiodace(a)
-    b = usun_zera_wiodace(b)
+    a = _usun_zera_wiodace(a)
+    b = _usun_zera_wiodace(b)
 
-    czy_minus = False # mówi, czy trzeba na końcu dodać minus do wyniku
     czy_jeden = False # mówi, czy trzeba dodać jeden do wyniku przed ewentualnym dodaniem minusa (podłoga z dzielenia dodatniej liczby to jak sufit po usunięciu jej minusa)
+    czy_minus = False # mówi, czy trzeba na końcu dodać minus do wyniku
 
     if a[0] == "-":
         czy_minus = not czy_minus
@@ -294,7 +298,7 @@ def podziel_calkowicie(a: str, b: str) -> str:
         raise Exception("Nie można dzielić przez zero!")
 
     # jeśli dzielna jest mniejsza od dzielnika, to od razu można podać wynik
-    if not czy_niemniejsza(a, b):
+    if porownaj(a, b) == -1:
         if czy_jeden:
             if czy_minus:
                 return "-1"
@@ -306,20 +310,21 @@ def podziel_calkowicie(a: str, b: str) -> str:
     prawy = a
     srodek = podziel_calkowicie_przez_2(dodaj(lewy, prawy))
     iloczyn = pomnoz(b, srodek)
-    kolejny_iloczyn = pomnoz(b, dodaj(srodek, "1"))
+    kolejny_iloczyn = dodaj(iloczyn, b)
 
-    # pętla zatrzymuje się, jeśli zgadnięty_iloraz * dzielnik = dzielna
+    # pętla zatrzymuje się, gdy:
+    # zgadnięty_iloraz * dzielnik == dzielna
     # LUB
-    # dzielna należy do zbioru ( zgadnięty_iloraz * dzielnik, (zgadnięty_iloraz + 1) * dzielnik ]
-    while not (iloczyn == a or (czy_niemniejsza(a, iloczyn) and czy_niemniejsza(kolejny_iloczyn, a))):
-        if czy_niemniejsza(a, iloczyn):
+    # dzielna należy do przedziału ( zgadnięty_iloraz * dzielnik, (zgadnięty_iloraz + 1) * dzielnik )
+    while not (iloczyn == a or kolejny_iloczyn == a or (porownaj(a, iloczyn) == 1 and porownaj(kolejny_iloczyn, a) == 1)):
+        if porownaj(a, iloczyn) == 1:
             lewy = srodek
         else:
             prawy = srodek
 
         srodek = podziel_calkowicie_przez_2(dodaj(lewy, prawy))
         iloczyn = pomnoz(b, srodek)
-        kolejny_iloczyn = pomnoz(b, dodaj(srodek, "1"))
+        kolejny_iloczyn = dodaj(iloczyn, b)
 
     # ostateczne modyfikacje wyniku
     if kolejny_iloczyn == a:
