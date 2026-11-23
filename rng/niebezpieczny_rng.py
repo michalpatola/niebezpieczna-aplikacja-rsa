@@ -6,8 +6,14 @@ Generator wykorzystuje wzór x_{x+1} = (a*x_n + c) mod m,
 istotą słabości tego generatora, jest wybór słabego ziarna x_0.
 '''
 
-import time
+#Żeby działało odwoływanie do plków spoza obecnego katalogu
+import sys
+from pathlib import Path
+katalog_nadrzedny = Path(__file__).resolve().parent.parent
+sys.path.append(str(katalog_nadrzedny))
+
 from rsa.rsa_male_liczby import czy_pierwsza
+import time
 
 #Stałe LCG
 A = 1664525
